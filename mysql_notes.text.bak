@@ -1,0 +1,294 @@
+H:\sql\MySQL Server 5.7\bin>mysql -uroot -p   //然后再输密码 安全
+H:\sql\MySQL Server 5.7\bin>mysql -uroot -p123456  // 不安全
+set names gbk;
+
+mysql> show databases; //展示库
+mysql> use test;             //使用库
+mysql> create database liu charset utf8;  //创建数据库
+mysql> drop database liu;删除数据库
+
+//mysql不可以rename数据库 可以rename 表/列
+
+mysql>drop table xxx; 	//删除了table
+
+
+//建表
+create  table studnt(	
+id int not null default 0,
+id2 int auto_increment primary key)
+engine myisam charset utf8;
+
+create table xxx like student; ////
+
+mysql> show tables;            ////展示Table
+
+mysql> rename table stu to student;  //rename table
+show create table 表名;  // 查看建表信息
+
+ //insert values into table  可以部分列插入,其他列默认值
+insert into stud                     
+(id,id2)
+value
+(1,11);
+
+//insert values into table 插入所有列,可以不写列.
+ insert into student values     
+  (1),(9);
+
+alter table stud add id3 tinyint unsigned;
+alter table stud add id3 tinyint unsigned first; //添加到第一列
+alter table stud add id3 tinyint unsigned after id2;//添加带id2列后面
+alter table stud add id4 tinyint (2) zerofill unsigned;//补0,2位显示 (m)zerofill 必须配合,默认是unsigned
+
+
+desc 表名  //查看的是表里的列信息
+
+
+
+ update stud  set  id2=id2/10+22 where id=2,and name='';//修改表信息,where后面写表达式
+
+delete from stud where id2=22;//删除一行
+delete from stud ;所以行都删除
+
+truncate student; //是删除表再建相同结构的表
+
+//查看列的信息 顺序::::where ->group by  ->having  -> order by-> limit 
+select id2  from stud where id=1;
+ select * from student;
+
+select 列名 from student where 表达式;
+表达式{< > !=  >= <= =  in(,)  between and   !  ||  && 
+ like'流%'  }like模糊匹配, %通配任意字符 , _通配单一字符
+
+select 列名1,列名2-列名1 from student; //列名就是变量,列名2-列名1这一列就是运算结果
+select 列名1,(列名2-列名1)as 列名3 from student;
+
+//例子
+//select (id2-id) as test from stud where test=9; where报错不存在test列,下面的正确
+select (id2-id) as test from stud where  (id2-id)>=9;
+select concat('my',substring(id,2)) from stud where  (id2-id)>=9;
+select id2=id2+10 as test from stud;
+
+select max(id) from stud; //max()  min() sum() avg() count(*)null也统计, count(列名)列名不统计null
+
+查询模型:
+   列就是变量,每一行上有不同的值.
+where条件是表达式,在哪一行上表达式为真,哪一行就取出来
+
+//分组
+ select  id,sum(id+id2) from stud group by id;
+ select  id2,sum(id+id2),id4 from stud group by id2,id4;
+
+//having操作查询结果集
+ select  id2,sum(id+id2)as summ from stud group by id2 having summ=12;
+ select  id2,sum(id+id2)as summ from stud where id4>1 group by id2 having summ=13;
+
+ select * from question;//查询2或2门以上的挂科的人的平均成绩
++------+---------+-------+
+| name | subject | score |
++------+---------+-------+
+| jim  | ma      |    90 |
+| jim  | en      |    50 |
+| jim  | ch      |    40 |
+| tim  | ma      |    66 |
+| tim  | en      |    45 |
+| tim  | ch      |    55 |
+| tom  | ma      |    40 |
++------+---------+-------+
+答案1:select name,avg(score),sum(score<60) as gua from question group by name having gua>=2;
+
+step1:查询所有平均分	select name,avg(score) from question group by name ;
+step2:查询 是否挂科		  select name,score,score<60 as gua from question  ;
+step3:结合1,2步 挂科的sum ,然后having gua>2
+           select name,avg(score),sum(score<60) as gua from question group by name having gua>=2;
+  
+//order
+order by 列名  desc/asc;降升序
+order by 列名1  desc,列名2  desc;   //列名1优先级高 
+//limit
+select * from question order by score,name limit 3;     // 只有3行数据 offset为0可以不写
+select * from question order by score,name limit 1,2; //取2,3行 1表示offset偏移量 .2表示N实际取出的量 
+
+*********子查询
+//where的
+select name from question where score=( select max(score) from question); //返回单行单列,单个值
+                    where score in( select max(score) from question group by name); //返回单列,可以多行                                           
+
+//from的 内层查询结果当成临时表,供外层查询
+ select name from (select name ,score from question where score>60)as qu;  //必须 为派生表取名字
+
+//exists 把外层查询的结果,拿到内层查询看是否成立
+select * from question2 where exists (select * from question where score=question2.score);
+
+
+
+
+table是一个集合
+一行记录是一个元素
+
+
+ select * from question,question2;//笛卡尔乘 //全相连
+ select * from question,question2 where question.score=question2.score ;
+
+//左连接 A left join B on 条件 形成结果集,可以看成一个表c,
+  //对c可以查询 where group by having  order by  limit, 或者left join C on 条件!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ select * from question left join question2 on question.score=question2.score;
+ select * from question left join question2 on question.score=question2.score where name='jim';
+
+//左右连接可以互换
+A left join B on 条件== B  right  join A on 条件
+
+create table man(name char(3), wife char(1) )engine myisam charset utf8;
+create table women(name char(3), husband char(1) )engine myisam charset utf8;
+insert into man values ('屌丝','A'),('李四','b'),('王五','c'),('富二代','d'),('七哥','e');
+insert into women values ('空姐','b'),('小七','c'),('张柏芝','d'),('阿娇','d'),('黛玉','e'),('玉二','f');
+
+左连接 男生带妻子上来,没有妻子写null
+ select * from man left join women on man.wife=women.husband; //会自动补null
++-----------+------+-----------+---------+
+| name      | wife | name      | husband |
++-----------+------+-----------+---------+
+| 李四      | b    | 空姐      | b       |
+| 王五      | c    | 小七      | c       |
+| 富二代    | d    | 张柏芝    | d       |
+| 富二代    | d    | 阿娇      | d       |
+| 七哥      | e    | 黛玉      | e       |
+| 屌丝      | A    | NULL      | NULL    |
++-----------+------+-----------+---------+
+右连接 女生带人上来,没有就null
+ select * from man right join women on man.wife=women.husband;//会自动补null
++-----------+------+-----------+---------+
+| name      | wife | name      | husband |
++-----------+------+-----------+---------+
+| 李四      | b    | 空姐      | b       |
+| 王五      | c    | 小七      | c       |
+| 富二代    | d    | 张柏芝    | d       |
+| 富二代    | d    | 阿娇      | d       |
+| 七哥      | e    | 黛玉      | e       |
+| NULL      | NULL | 玉二      | f       |
++-----------+------+-----------+---------+
+
+ 内连接=左右连接的交集
+有配偶的人上来.
+select * from man  inner join women on man.wife=women.husband;
++-----------+------+-----------+---------+
+| name      | wife | name      | husband |
++-----------+------+-----------+---------+
+| 李四      | b    | 空姐      | b       |
+| 王五      | c    | 小七      | c       |
+| 富二代    | d    | 张柏芝    | d       |
+| 富二代    | d    | 阿娇      | d       |
+| 七哥      | e    | 黛玉      | e       |
++-----------+------+-----------+---------+
+
+外连接(mysql没有)=左右连接的并集
+所以人上来,没有配偶带null
+
+//union 
+合并的是结果集,不区分哪里的表
+要求列的数量要相同,列的类型不用相同
+union的行重复记录会自动去除,如果 union all 则重复的会显示
+
+ select * from man  union select * from women; //列名以第一个为准
+
+里面的内层排序,如果没有limit,则会被优化,失效(无意义 外层排序会再排序)
+(select * from man order by wife asc)union (select * from women order by husband desc);
+(select * from man order by wife asc)union (select * from women order by husband desc) order by wife;
+内层排序有了limit,影响了结果集;那么此时内层排序就有效
+(select * from man order by wife desc limit 3)union (select * from women order by husband desc limit 2) ;
+
+
+select name ,sum(number) from (select * from addtest union all select * from addtest2)as temp group by name;
+
+
+//view
+虚表 不占用空间(只有一个文件结构 frm ,正常表是3个文件 索引MYI 数据MYD 结构frm ) 
+创建完毕,就和表一样可以查询了
+
+表的变化会同步到view
+view 某种情况下可以改,必须是view的行和表的行是一一对应的关系
+
+order by limit的结果,不是一一对应的. 例如 id 1 ,1 ,1 ,1 ,1 
+order by xxx limit 3  你不知道选的3行对应的是表中的哪3行 
+
+
+//创建列名1的虚表  (view 改成table 就变成一张table)
+create view test   //create  algorithm=merge没有生成临时表/temptable生成临时表/undefined系统自动处理  view test 
+as 
+select 列名1 from 表1
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+set names gbk;
+
+tinyint 1字节
+smallint 2
+middleint3
+int 4
+bigint 8
+
+folat(m,d) d位小数点后面位数,总位数m 精度底
+ decimal(m,d)  定点小数     精度高
+
+char(m)  定长字符串     限制的是字符,不是字节
+varchar(m)  变长
+text
+blob 是二进制信息,存储图像和音频等
+
+date '1000-01-01'   '9999-12-31'  3字节
+time '00:00:00' 3字节
+timestamp  'yyyy-mm-dd hh:mm:ss' 4字节  默认当前时间 
+datetime  'yyyy-mm-dd hh:mm:ss' 8字节
+year   'yyyy'1字节 1901 2155   256变化 ,一种是0000
+ 
+create table people (
+id int unsigned auto_increment,
+usename char(20) not null default ' ',
+gender char(1) not null default ' ',
+weight tinyint unsigned not null default 0,
+birth  date not null default '0000-00-00',
+salary decimal(8,2) not null default 0.00,
+lastlogin int unsigned not null default 0,
+ primary key(id)
+)engine myisam charset utf8;
+
+---------------
+编码知识:
+ASC||
+
+GB2312 6000+中文字 2字节  0-127是asc码的,中文是2个字节都大于asc码
+
+GBK    2w+中文字 低字节   0-127等都可以用  
+140 35 65 179 82//碰到大于127的就往后找一个字节,2字节理解中文. 小于128的就是asc码
+
+ANSI代表是本地标识符 中国是gbk
+
+Unicode世界通用的码表 4字节编号 
+UTF-8是压缩Unicode的 网络传输使用 不定长 1~6字节
+
+乱码
+1 解码与实际编码不一致,可以修复的  (用utf-8解码gbk编码文件)
+2传输过程中,编码不一致,大转小 导致字节丢了,不可修复 (utf-8 --> gb2312   发现错误的gb2312码(utf-8)就丢掉了 造成丢失 )
+
+GBK->UNICODE->UTF-8
+
+乱码::::::::::::
+set character_set_client=gbk; 
+client //客户端编码
+connection //连接器编码  //连接器会自动转码,以匹配数据库编码
+results//连接器返回给客户端显示的编码
+
+set names gbk  //等于client results connection都是gbk
+
+UTF-8+ 是有boom头的
+
+事务安全
+原子性 一致性 隔离性 持久性
+start transaction;
+....操作
+commit;成功就提交 rollback;失败回滚
