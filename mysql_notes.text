@@ -292,3 +292,5 @@ UTF-8+ 是有boom头的
 start transaction;
 ....操作
 commit;成功就提交 rollback;失败回滚
+
+ H:\sql\MySQL tee D:/1.sql  (D:/a.txt)  把cmd窗口的东西包括命令和执行命令的显示信息都保存下来
